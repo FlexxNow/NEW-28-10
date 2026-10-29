@@ -56,3 +56,7 @@ En Ajustes del televisor → Aplicaciones → Alarma TV → Desinstalar. Android
 ## Estado de esta versión
 
 Verificado en el entorno de desarrollo: compilación `assembleDebug`, `lintDebug` (0 errores; 7 avisos sobre traducción de textos y reglas de backup), 134 casos de cálculo de horarios y firma APK v2. Pendiente: instalar en el Philips y validar sonido, encendido desde reposo, volumen, interfaz con mando y posponer. No se ha instalado nada en la TV desde este entorno.
+
+### Versión 1.1: corrección visual para TV
+
+Los botones usan altura mínima en dp y altura de contenido, en lugar de 56 píxeles fijos que recortaban el texto en el Philips. También se adaptaron márgenes, controles de días y volumen; el foco del mando se destaca con un borde turquesa. La pantalla se desplaza al navegar si no cabe todo. Comprobar visualmente esta actualización en el televisor: hora, tonos, Guardar, prueba de sonido y Detener deben leerse completos, y los botones de la pantalla de alarma también.
