@@ -6,7 +6,7 @@ import android.net.Uri;
 import android.os.*;
 public class AlarmService extends Service {
     public static volatile boolean ringing;
-    MediaPlayer player;AudioManager audio;PowerManager.WakeLock lock;int original=-1,applied=-1;
+    MediaPlayer player;AudioManager audio;PowerManager.WakeLock lock,screenLock;int original=-1,applied=-1;
     Handler handler=new Handler(Looper.getMainLooper());
     final Runnable timeout=()->stopSelf();
     static final String CHANNEL="alarm-ring-v1";
@@ -29,8 +29,18 @@ public class AlarmService extends Service {
         startForeground(1,notification,android.content.pm.ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PLAYBACK);
         if(ringing)return START_NOT_STICKY;
         ringing=true;
+        Alarms.prefs(this).edit().putLong("service_started",System.currentTimeMillis()).apply();
         PowerManager pm=(PowerManager)getSystemService(POWER_SERVICE);
+        Alarms.prefs(this).edit().putBoolean("interactive_at_ring",pm.isInteractive()).apply();
         lock=pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK,"AlarmaTV:sonido");lock.acquire(6*60*1000L);
+        // On Android TV a full-screen notification alone may not switch on the panel.
+        // This is a bounded request supported by Android 11, not a guarantee of firmware wake.
+        try {
+            screenLock=pm.newWakeLock(PowerManager.SCREEN_BRIGHT_WAKE_LOCK | PowerManager.ACQUIRE_CAUSES_WAKEUP,"AlarmaTV:pantalla");
+            screenLock.acquire(5*60*1000L);
+        } catch (RuntimeException e) {
+            Alarms.prefs(this).edit().putString("wake_error",e.getMessage()).apply();
+        }
         restoreVolume(this);
         audio=(AudioManager)getSystemService(AUDIO_SERVICE);
         original=audio.getStreamVolume(AudioManager.STREAM_ALARM);
@@ -54,6 +64,7 @@ public class AlarmService extends Service {
             player.setLooping(true);player.setVolume(1f,1f);
             player.setOnErrorListener((mp,what,extra)->{Alarms.prefs(this).edit().putString("error","Error de reproducción: "+what+" / "+extra).apply();stopSelf();return true;});
             player.start();
+            Alarms.prefs(this).edit().putLong("audio_started",System.currentTimeMillis()).apply();
         }catch(Exception e){Alarms.prefs(this).edit().putString("error","No se pudo reproducir: "+e.getMessage()).apply();stopSelf();return START_NOT_STICKY;}
         handler.postDelayed(timeout,5*60*1000L);
         return START_NOT_STICKY;
@@ -70,6 +81,7 @@ public class AlarmService extends Service {
         if(player!=null){player.release();player=null;}
         restoreVolume(this);
         if(lock!=null&&lock.isHeld())lock.release();
+        if(screenLock!=null&&screenLock.isHeld())screenLock.release();
         ringing=false;stopForeground(true);super.onDestroy();
     }
     @Override public IBinder onBind(Intent i){return null;}

@@ -11,9 +11,11 @@ final class Alarms {
     static void scheduleAt(Context c, long time) {
         if (Build.VERSION.SDK_INT >= 31 && !manager(c).canScheduleExactAlarms())
             throw new SecurityException("Permite alarmas exactas en los ajustes de Android.");
-        PendingIntent show = PendingIntent.getActivity(c, 2, new Intent(c, MainActivity.class), PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
-        manager(c).setAlarmClock(new AlarmManager.AlarmClockInfo(time, show), fire(c));
-        prefs(c).edit().putLong("next", time).apply();
+        // Philips firmware registered setAlarmClock as RTC (type 1), not a wakeup.
+        // Request RTC_WAKEUP explicitly; dumpsys must still confirm what the firmware accepts.
+        manager(c).setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, time, fire(c));
+        prefs(c).edit().putLong("next", time).putInt("requested_type", AlarmManager.RTC_WAKEUP)
+            .putLong("scheduled_at", System.currentTimeMillis()).apply();
     }
     static void restoreSchedule(Context c) {
         long snooze=prefs(c).getLong("snooze",0);

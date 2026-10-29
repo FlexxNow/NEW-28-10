@@ -8,7 +8,7 @@ App Android nativa, en Java, independiente de CleanYourTV, para probar alarmas c
 - Tono propio incluido y selección de tonos de alarma del firmware, si el TV ofrece selector.
 - Volumen de alarma temporal, restaurado al detener; no modifica el volumen multimedia deliberadamente. Algunos televisores tienen volumen fijo o rutas de audio propias: se debe comprobar la salida real.
 - Botones grandes para el control remoto, prueba inmediata, detener y posponer 10 minutos. Límite de sonido de cinco minutos.
-- `AlarmManager.setAlarmClock`, servicio en primer plano, audio con `USAGE_ALARM`, notificación de pantalla completa y actividad con `setTurnScreenOn`. Reprogramación tras reiniciar o cambiar hora/zona horaria; la app debe abrirse y guardarse al menos una vez.
+- `AlarmManager.setExactAndAllowWhileIdle(RTC_WAKEUP)`, servicio en primer plano, audio con `USAGE_ALARM`, notificación de pantalla completa y actividad con `setTurnScreenOn`. Reprogramación tras reiniciar o cambiar hora/zona horaria; la app debe abrirse y guardarse al menos una vez.
 - El archivo WAV es sintetizado por este proyecto; no depende de que haya tonos preinstalados.
 
 ## Compilar e instalar desde Windows
@@ -64,3 +64,9 @@ Los botones usan altura mínima en dp y altura de contenido, en lugar de 56 píx
 ### Versión 1.2: hora con el control remoto
 
 Se sustituye el diálogo de reloj circular por un selector de horas y minutos con modo `spinner` explícito, en formato de 24 horas. Permite editar números con teclado y navegar entre campos con el mando. Aceptar actualiza el formulario; Guardar programa la alarma. Cancelar conserva la hora anterior. Pendiente comprobar la navegación y edición en el firmware Philips real.
+
+### Versión 1.3: diagnóstico de reposo y solicitud explícita de despertar
+
+En el Philips real, la programación anterior aparecía en dumpsys como RTC tipo 1 y cero wakeups. El receptor sí se ejecutó, pero los datos obtenidos después del encendido manual no demuestran que lo hiciera a la hora prevista. Se sustituye por una solicitud explícita RTC_WAKEUP tipo 0 y se añade un wake lock de pantalla acotado a cinco minutos mientras suena. El firmware puede convertir o rechazar la solicitud: comprobar dumpsys antes de probar. Las alarmas exactas con allow-while-idle pueden sufrir límites de frecuencia durante reposo; no se promete puntualidad basándose solo en la compilación.
+
+Se guardan timestamps locales de programación, hora esperada, recepción, inicio de servicio e inicio de audio, y el estado interactivo al sonar. No se envían a ningún servidor. Un timestamp de inicio de audio acredita que MediaPlayer inició reproducción, no que los altavoces produjeran sonido audible. Validar en el TV tanto encendido como audio.
