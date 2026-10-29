@@ -19,7 +19,7 @@ public class MainActivity extends Activity {
         LinearLayout box=Ui.root(this,"Alarma TV");
         status=Ui.text(this,box,"",17);
         enabled=new CheckBox(this);enabled.setText("Alarma activada");enabled.setTextColor(-1);enabled.setChecked(p.getBoolean("enabled",false));enabled.setTextSize(18);enabled.setMinHeight(Ui.dp(this,48));box.addView(enabled);
-        time=Ui.button(this,box,String.format(Locale.getDefault(),"Hora: %02d:%02d",hour,minute),v -> new TimePickerDialog(this,(view,h,m)->{hour=h;minute=m;time.setText(String.format(Locale.getDefault(),"Hora: %02d:%02d",h,m));},hour,minute,true).show());
+        time=Ui.button(this,box,String.format(Locale.getDefault(),"Hora: %02d:%02d",hour,minute),v -> chooseTime());
         Ui.text(this,box,"Repetir (ningún día = una sola vez)",16);
         LinearLayout row=new LinearLayout(this);box.addView(row);
         String[] names={"Lun","Mar","Mié","Jue","Vie","Sáb","Dom"};
@@ -46,6 +46,28 @@ public class MainActivity extends Activity {
         Ui.text(this,box,"Para probar desde reposo: guarda una alarma para dentro de 2 minutos, vuelve a Inicio y apaga con el control. No desenchufes. El encendido y el audio dependen del firmware y de la salida de sonido. Forzar detención cancela las alarmas hasta abrir y guardar de nuevo.",14);
         refresh();time.requestFocus();
     }
+    void chooseTime() {
+        android.view.View content = getLayoutInflater().inflate(R.layout.alarm_time_picker, null);
+        TimePicker picker = content.findViewById(R.id.alarm_time);
+        picker.setIs24HourView(true);
+        picker.setHour(hour);
+        picker.setMinute(minute);
+        AlertDialog dialog = new AlertDialog.Builder(this)
+            .setTitle("Hora de alarma · 24 horas")
+            .setView(content)
+            .setNegativeButton("Cancelar", null)
+            .setPositiveButton("Aceptar", (d, which) -> {
+                picker.clearFocus();
+                hour = picker.getHour();
+                minute = picker.getMinute();
+                time.setText(String.format(Locale.getDefault(), "Hora: %02d:%02d", hour, minute));
+            }).create();
+        dialog.setOnShowListener(d -> {
+            picker.requestFocus();
+        });
+        dialog.show();
+    }
+
     void refresh(){if(status==null)return;long next=Alarms.prefs(this).getLong("next",0);status.setText((next>0?"Próxima: "+DateFormat.getDateTimeInstance().format(new Date(next)):"Sin alarma programada")+"\n"+Alarms.prefs(this).getString("error",""));}
     @Override public void onResume(){super.onResume();refresh();}
     @Override protected void onActivityResult(int request,int result,Intent data){super.onActivityResult(request,result,data);if(request==10&&result==RESULT_OK&&data!=null){Uri uri=data.getParcelableExtra(RingtoneManager.EXTRA_RINGTONE_PICKED_URI);if(uri!=null){Alarms.prefs(this).edit().putString("tone",uri.toString()).apply();tone.setText("Tono del sistema seleccionado");}}}

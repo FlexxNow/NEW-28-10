@@ -60,3 +60,7 @@ Verificado en el entorno de desarrollo: compilación `assembleDebug`, `lintDebug
 ### Versión 1.1: corrección visual para TV
 
 Los botones usan altura mínima en dp y altura de contenido, en lugar de 56 píxeles fijos que recortaban el texto en el Philips. También se adaptaron márgenes, controles de días y volumen; el foco del mando se destaca con un borde turquesa. La pantalla se desplaza al navegar si no cabe todo. Comprobar visualmente esta actualización en el televisor: hora, tonos, Guardar, prueba de sonido y Detener deben leerse completos, y los botones de la pantalla de alarma también.
+
+### Versión 1.2: hora con el control remoto
+
+Se sustituye el diálogo de reloj circular por un selector de horas y minutos con modo `spinner` explícito, en formato de 24 horas. Permite editar números con teclado y navegar entre campos con el mando. Aceptar actualiza el formulario; Guardar programa la alarma. Cancelar conserva la hora anterior. Pendiente comprobar la navegación y edición en el firmware Philips real.
